@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treble Clef Memory Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #game-container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .screen {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            padding: 48px;
+            text-align: center;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .screen.fade-out {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+        }
+
+        .screen.fade-in {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .level-btn {
+            padding: 20px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .level-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .level-btn:hover::before {
+            left: 100%;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4);
+        }
+
+        .level-btn:active {
+            transform: translateY(0);
+        }
+
+        #vexflowContainer {
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            padding: 10px;
+            width: 300px; /* Increased width for sequential notes */
+        }
+
+        #piano {
+            position: relative;
+            height: 220px;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), 0 8px 32px rgba(0, 0, 0, 0.12);
+            width: 600px;
+            margin: 20px auto;
+            animation: pianoSlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes pianoSlideIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .key {
+            position: absolute;
+            border-radius: 0 0 8px 8px;
+            box-sizing: border-box;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .white-key {
+            width: 48px;
+            height: 180px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            z-index: 1;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .white-key:hover {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .white-key:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .black-key {
+            width: 28px;
+            height: 110px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #0f172a;
+            z-index: 2;
+            pointer-events: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .white-key.correct {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+            border-color: #047857;
+            animation: correctPulse 0.6s ease-out;
+        }
+
+        .white-key.incorrect {
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+            border-color: #b91c1c;
+            animation: incorrectShake 0.6s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .c4-key::after {
+            content: 'C4';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #64748b;
+            z-index: 3;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .score-label {
+            font-size: 1.1rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        #question-counter {
+            font-size: 1.2rem;
+            color: #1e293b;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen fade-in">
+            <h1>Treble Clef Memory Game</h1>
+            <button class="level-btn" onclick="startGame()">Start Game</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen" style="display: none;">
+            <div id="question-counter"></div>
+            <div id="vexflowContainer">
+                <div id="vf"></div>
+            </div>
+            <div id="piano" style="display: none;"></div>
+        </div>
+
+        <!-- Score Screen -->
+        <div id="score-screen" class="screen" style="display: none;">
+            <h1>Game Over!</h1>
+            <div class="score-card">
+                <div class="score-number" id="score-number"></div>
+                <div class="score-label" id="score-details"></div>
+            </div>
+            <button class="level-btn" onclick="returnToStart()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
+    <script>
+        // Note mapping: position (1-9) to VexFlow pitch and piano note
+        const noteMap = {
+            1: { pitch: "e/4", note: "E4" }, // Line 1
+            2: { pitch: "f/4", note: "F4" }, // Space 1
+            3: { pitch: "g/4", note: "G4" }, // Line 2
+            4: { pitch: "a/4", note: "A4" }, // Space 2
+            5: { pitch: "b/4", note: "B4" }, // Line 3
+            6: { pitch: "c/5", note: "C5" }, // Space 3
+            7: { pitch: "d/5", note: "D5" }, // Line 4
+            8: { pitch: "e/5", note: "E5" }, // Space 4
+            9: { pitch: "f/5", note: "F5" }  // Line 5
+        };
+
+        // Piano key definitions (C4 to G5, but only E4 to F5 are clickable)
+        const pianoKeys = [
+            { note: 'C4', type: 'white', pos: 0 },
+            { note: 'C#4', type: 'black', pos: 35 },
+            { note: 'D4', type: 'white', pos: 50 },
+            { note: 'D#4', type: 'black', pos: 85 },
+            { note: 'E4', type: 'white', pos: 100 },
+            { note: 'F4', type: 'white', pos: 150 },
+            { note: 'F#4', type: 'black', pos: 185 },
+            { note: 'G4', type: 'white', pos: 200 },
+            { note: 'G#4', type: 'black', pos: 235 },
+            { note: 'A4', type: 'white', pos: 250 },
+            { note: 'A#4', type: 'black', pos: 285 },
+            { note: 'B4', type: 'white', pos: 300 },
+            { note: 'C5', type: 'white', pos: 350 },
+            { note: 'C#5', type: 'black', pos: 385 },
+            { note: 'D5', type: 'white', pos: 400 },
+            { note: 'D#5', type: 'black', pos: 435 },
+            { note: 'E5', type: 'white', pos: 450 },
+            { note: 'F5', type: 'white', pos: 500 },
+            { note: 'F#5', type: 'black', pos: 535 },
+            { note: 'G5', type: 'white', pos: 550 }
+        ];
+
+        // Note frequencies for sound
+        const noteFrequencies = {
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
+            'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00,
+            'A#4': 466.16, 'B4': 493.88, 'C5': 523.25, 'C#5': 554.37, 'D5': 587.33,
+            'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99
+        };
+
+        // Audio context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Game state
+        let score = 0, questionNumber = 1, correctNotes = [], selectedNotes = [], isGameActive = false;
+
+        // Resume AudioContext on first click
+        document.addEventListener('click', function initAudio() {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            document.removeEventListener('click', initAudio);
+        });
+
+        // Transition between screens
+        function transitionScreens(hideElement, showElement, instant = false) {
+            if (instant) {
+                hideElement.style.display = 'none';
+                showElement.style.display = 'block';
+                showElement.classList.add('fade-in');
+            } else {
+                hideElement.classList.add('fade-out');
+                hideElement.classList.remove('fade-in');
+                setTimeout(() => {
+                    hideElement.style.display = 'none';
+                    showElement.style.display = 'block';
+                    showElement.classList.remove('fade-out');
+                    showElement.classList.add('fade-in');
+                }, 300);
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            score = 0;
+            questionNumber = 1;
+            isGameActive = true;
+            selectedNotes = [];
+            transitionScreens(
+                document.getElementById('start-screen'),
+                document.getElementById('game-screen'),
+                true // Instant transition
+            );
+            createPiano();
+            startQuestion();
+        }
+
+        // Create piano keyboard
+        function createPiano() {
+            const piano = document.getElementById('piano');
+            piano.innerHTML = '';
+            piano.style.width = '600px';
+
+            pianoKeys.forEach(key => {
+                const keyElement = document.createElement('div');
+                keyElement.className = key.type === 'white' ? 'key white-key' : 'key black-key';
+                keyElement.style.left = `${key.pos}px`;
+                if (key.type === 'white') {
+                    keyElement.dataset.note = key.note;
+                    if (noteMap[Object.keys(noteMap).find(pos => noteMap[pos].note === key.note)]) {
+                        keyElement.onclick = () => handleKeyClick(key.note);
+                    }
+                    if (key.note === 'C4') {
+                        keyElement.classList.add('c4-key');
+                    }
+                }
+                piano.appendChild(keyElement);
+            });
+        }
+
+        // Draw three notes sequentially on the treble clef
+        function drawStaffWithNotes(positions) {
+            const vfDiv = document.getElementById('vf');
+            vfDiv.innerHTML = '';
+            const VF = Vex.Flow;
+            const renderer = new VF.Renderer(vfDiv, VF.Renderer.Backends.SVG);
+            renderer.resize(300, 150); // Increased width for sequential notes
+            const context = renderer.getContext();
+            const stave = new VF.Stave(10, 40, 280);
+            stave.addClef("treble").setContext(context).draw();
+            const notes = positions.map(pos => 
+                new VF.StaveNote({ keys: [noteMap[pos].pitch], duration: "q" })
+            );
+            const voice = new VF.Voice({ num_beats: 3, beat_value: 4 });
+            voice.addTickables(notes);
+            new VF.Formatter().joinVoices([voice]).format([voice], 260);
+            voice.draw(context, stave);
+        }
+
+        // Get three random distinct positions
+        function getRandomPositions(k) {
+            const positions = Object.keys(noteMap).map(Number);
+            for (let i = positions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [positions[i], positions[j]] = [positions[j], positions[i]];
+            }
+            return positions.slice(0, k);
+        }
+
+        // Start a new question
+        function startQuestion() {
+            if (questionNumber > 20) {
+                showScore();
+                return;
+            }
+            correctNotes = getRandomPositions(3); // Select 3 distinct notes
+            selectedNotes = [];
+            drawStaffWithNotes(correctNotes);
+            const gameScreen = document.getElementById('game-screen');
+            const vexflowContainer = document.getElementById('vexflowContainer');
+            const piano = document.getElementById('piano');
+            const questionCounter = document.getElementById('question-counter');
+            gameScreen.style.display = 'block';
+            vexflowContainer.style.display = 'block';
+            piano.style.display = 'none';
+            questionCounter.style.display = 'block';
+            questionCounter.textContent = `Question ${questionNumber} of 20`;
+            setTimeout(() => {
+                vexflowContainer.style.display = 'none';
+                piano.style.display = 'block';
+            }, 4000); // Show notes for 4 seconds
+        }
+
+        // Handle piano key click
+        function handleKeyClick(note) {
+            if (!isGameActive) return;
+            playSound(note);
+            const keyElement = document.querySelector(`.key[data-note="${note}"]`);
+            const correctNote = noteMap[correctNotes[selectedNotes.length]].note;
+            if (note === correctNote) {
+                keyElement.classList.add('correct');
+            } else {
+                keyElement.classList.add('incorrect');
+            }
+            selectedNotes.push(note);
+            setTimeout(() => {
+                keyElement.classList.remove('correct', 'incorrect');
+                if (selectedNotes.length === 3) {
+                    // Check if all three notes were correct and in order
+                    const isCorrect = selectedNotes.every((note, i) => note === noteMap[correctNotes[i]].note);
+                    if (isCorrect) {
+                        score++;
+                    }
+                    questionNumber++;
+                    isGameActive = true;
+                    setTimeout(startQuestion, 300); // Short delay before next question
+                } else {
+                    isGameActive = true; // Allow next click
+                }
+            }, 600);
+        }
+
+        // Play note sound
+        function playSound(note) {
+            if (!noteFrequencies[note]) return;
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(noteFrequencies[note], audioContext.currentTime);
+            const gainNode = audioContext.createGain();
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            setTimeout(() => oscillator.stop(), 300);
+        }
+
+        // Show final score
+        function showScore() {
+            const percentage = (score / 20 * 100).toFixed(1);
+            document.getElementById('score-number').textContent = `${percentage}%`;
+            document.getElementById('score-details').textContent = `${score} correct sequences out of 20`;
+            transitionScreens(
+                document.getElementById('game-screen'),
+                document.getElementById('score-screen')
+            );
+        }
+
+        // Return to start screen
+        function returnToStart() {
+            transitionScreens(
+                document.getElementById('score-screen'),
+                document.getElementById('start-screen')
+            );
+        }
+    </script>
+</body>
+</html>
