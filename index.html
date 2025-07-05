@@ -421,7 +421,7 @@
 
         // Start a new question
         function startQuestion() {
-            if (questionNumber > 20) {
+            if (questionNumber > 10) {
                 showScore();
                 return;
             }
@@ -436,7 +436,7 @@
             vexflowContainer.style.display = 'block';
             piano.style.display = 'none';
             questionCounter.style.display = 'block';
-            questionCounter.textContent = `Question ${questionNumber} of 20`;
+            questionCounter.textContent = `Question ${questionNumber} of 10`;
             setTimeout(() => {
                 vexflowContainer.style.display = 'none';
                 piano.style.display = 'block';
@@ -489,9 +489,9 @@
 
         // Show final score
         function showScore() {
-            const percentage = (score / 20 * 100).toFixed(1);
+            const percentage = (score / 10 * 100).toFixed(1);
             document.getElementById('score-number').textContent = `${percentage}%`;
-            document.getElementById('score-details').textContent = `${score} correct sequences out of 20`;
+            document.getElementById('score-details').textContent = `${score} correct sequences out of 10`;
             transitionScreens(
                 document.getElementById('game-screen'),
                 document.getElementById('score-screen')
